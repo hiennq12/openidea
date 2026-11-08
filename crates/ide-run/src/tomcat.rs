@@ -399,11 +399,12 @@ fn canonical_path(path: &Path) -> IdeResult<PathBuf> {
                 resolved.pop();
             }
             std::path::Component::CurDir => {}
+            // A bare prefix such as `\\?\C:` names the volume device, which cannot be canonicalized.
+            std::path::Component::Prefix(_) => {
+                resolved.push(component);
+                continue;
+            }
             _ => resolved.push(component),
-        }
-        // A bare drive prefix such as `\\?\C:` names the volume device, which cannot be canonicalized.
-        if !resolved.has_root() {
-            continue;
         }
         match dunce::canonicalize(&resolved) {
             Ok(path) => resolved = path,
